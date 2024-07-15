@@ -39,7 +39,7 @@ class FlappyBird:
 
 
         clock = pygame.time.Clock()
-        speed_up_coeff = 0
+        speed_up_coeff = -1
         velocity_pipe = 5
         velocity_bird = 0
         accelration_bird = 1
@@ -65,7 +65,7 @@ class FlappyBird:
                     pygame.quit()
                     sys.exit()
 
-            if score % 30 == 0 and speed_up_coeff < 5 and speed_up_coeff != 0:
+            if score % 30 == 0 and speed_up_coeff < 5:
                 speed_up_coeff += 1
 
             mainWindow.blit(background_image, (0,0))
