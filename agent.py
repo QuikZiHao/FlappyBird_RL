@@ -2,7 +2,9 @@ import torch
 import random
 import numpy as np
 from collections import deque
-import Linear_QNet, QTrainer
+from model.model import Linear_QNet, QTrainer
+from game.flappybirdAI import FlappyBirdAI
+from model.helper import plot
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -15,38 +17,43 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
-        self.model = Linear_QNet(11, 256, 512, 3)
+        self.model = Linear_QNet(7, 32, 64, 1)
         # self.model = self.model.load_state_dict(torch.load("model.pth"))
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
-
     def get_state(self, game):
         # Position of bird
-        #birdPos = [x,y]
-        #point_up = [x+1,y-1]
-        #point_down = [x+1,y+1]
-        #point_front = [x+1,y]
+        bird_pos = game.bird_pos
+        point_up = [bird_pos[0]+10,bird_pos[1]-10]
+        point_down = [bird_pos[0]+10,bird_pos[1]+10]
+        point_front = [bird_pos[0]+10,bird_pos[1]]
 
-        #dir_up = game.direction == Direction.up
-        #dir_down = game.direction == Direction.down
+        dir_up = game.direction == 1
+        dir_down = game.direction == 0
+        bird = [(game.bird).copy(), (game.bird).copy(), (game.bird).copy()] # 0: front, 1: up, 2: down
+        bird[0].x = bird[0].x + 10
+        bird[1].x = bird[1].x + 10
+        bird[1].y = bird[1].y - 10
+        bird[2].x = bird[2].x + 10
+        bird[2].y = bird[2].y + 10
 
         state = [
             # Danger in front
-            #(dir_front and is_collision(x+1,y))
+            (bird[0].colliderect(game.upper_pipe) or bird[0].colliderect(game.upper_pipe)),
 
             # Danger up
-            #(dir_front and is_collision(x+1,y+1))
+            (bird[1].colliderect(game.upper_pipe) or bird[1].colliderect(game.upper_pipe)),
 
             # Danger down
-            #(dir_front and is_collision(x+1,y-1))
+            (bird[2].colliderect(game.upper_pipe) or bird[2].colliderect(game.upper_pipe)),
             
             # Move direction
-            #dir_up
-            #dir_down
+            dir_up,
+            dir_down,
             
             # Next empty space location 
-            #game.space.y < game.head.y #empty space above
-            #game.space.y > game.head.y #empty space below
+            game.space < bird_pos[1], #empty space above
+            game.space > bird_pos[1] #empty space below
             ]
 
         return np.array(state, dtype=int)
@@ -71,15 +78,17 @@ class Agent:
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
         self.epsilon = 80 - self.n_games
-        final_move = [0,0,0]
+        final_move = [0]
         if random.randint(0, 200) < self.epsilon:
-            move = random.randint(0, 2)
-            final_move[move] = 1
+            move = random.randint(0, 1)
+            final_move[0] = move
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
-            move = torch.argmax(prediction).item()
-            final_move[move] = 1
+            if(prediction >= 0.5):
+                final_move[0] = 1
+            else:
+                final_move[0] = 0
 
         return final_move
 
@@ -90,7 +99,7 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
-    #game = ()
+    game = FlappyBirdAI(500,400)
     while True:
         # get old state
         state_old = agent.get_state(game)
@@ -99,7 +108,7 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
+        reward, done, score = game.run(final_move)
         state_new = agent.get_state(game)
 
         # train short memory

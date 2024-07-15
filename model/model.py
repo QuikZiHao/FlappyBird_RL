@@ -15,6 +15,7 @@ class Linear_QNet(nn.Module):
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
         x = self.linear3(x)
+        x = F.sigmoid(x)
         return x
 
     def save(self, file_name='model.pth'):
