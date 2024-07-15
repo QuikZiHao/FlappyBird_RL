@@ -16,10 +16,11 @@ class FlappyBird:
         bird3_image = pygame.transform.scale(bird3_image, (50, 50))
         bird4_image = pygame.image.load(r'source\bird4.png')
         bird4_image = pygame.transform.scale(bird4_image, (50, 50))
-        return ["bird_normal_"bird1_image, bird2_image, bird3_image, bird4_image]
+        return ["bird_normal_",bird1_image, bird2_image, bird3_image, bird4_image]
 
     def run(self):
         pygame.init()
         mainWindow = pygame.display.set_mode((500, 400))
 
+game = FlappyBird.run()
 
