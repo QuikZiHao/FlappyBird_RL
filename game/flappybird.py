@@ -41,12 +41,13 @@ class FlappyBird:
 
 
         clock = pygame.time.Clock()
-        speed_up_coeff = 0
+        speed_up_coeff = -1
         velocity_pipe = 5
         velocity_bird = 0
         accelration_bird = 1
         bird_idx = 0
         bird_ratio = 5
+        speed_up_flag = False
 
         my_font = pygame.font.SysFont("Jokerman Regular", 50)
         gameover_text = my_font.render("Game Over", True, (255, 0, 0))
@@ -67,8 +68,14 @@ class FlappyBird:
                     pygame.quit()
                     sys.exit()
 
-            if score % 30 == 0 and speed_up_coeff < 5 and score != 0:
+            if score % 30 == 0 and speed_up_coeff < 5:
+                if speed_up_flag == True:
+                    continue
+                speed_up_flag = True
                 speed_up_coeff += 1
+
+            if score % 30 == 1 and speed_up_flag:
+                speed_up_flag = False
 
             mainWindow.blit(background_image, (0,0))
             mainWindow.blit(upper_pipe_img, (upper_pipe.x, upper_pipe.y))
@@ -89,7 +96,7 @@ class FlappyBird:
                 upper_pipe.x -= velocity_pipe + speed_up_coeff
                 lower_pipe.x -= velocity_pipe + speed_up_coeff
 
-                velocity_bird += accelration_bird + speed_up_coeff
+                velocity_bird += accelration_bird
                 bird.y += velocity_bird
 
                 keypressed = pygame.key.get_pressed()
