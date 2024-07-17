@@ -6,37 +6,41 @@ from model.model import Linear_QNet, QTrainer
 from game.flappybirdAI import FlappyBirdAI
 from model.helper import plot
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.001
-
 class Agent:
 
     def __init__(self):
+        self.max_memory = 100000
+        self.batch_size = 1000
+        self.lr = 0.001
         self.n_games = 0
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY) # popleft()
+        self.memory = deque(maxlen=self.max_memory) # popleft()
         self.model = Linear_QNet(7, 32, 64, 1)
         # self.model = self.model.load_state_dict(torch.load("model.pth"))
-        self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+        self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
     def get_state(self, game):
         # Position of bird
         bird_pos = game.bird_pos
-        point_up = [bird_pos[0]+10,bird_pos[1]-10]
-        point_down = [bird_pos[0]+10,bird_pos[1]+10]
-        point_front = [bird_pos[0]+10,bird_pos[1]]
+        # point_up = [bird_pos[0]+10,bird_pos[1]-10]
+        # point_down = [bird_pos[0]+10,bird_pos[1]+10]
+        # point_front = [bird_pos[0]+10,bird_pos[1]]
 
         dir_up = game.direction == 1
         dir_down = game.direction == 0
         bird = [(game.bird).copy(), (game.bird).copy(), (game.bird).copy()] # 0: front, 1: up, 2: down
-        bird[0].x = bird[0].x + 10
-        bird[1].x = bird[1].x + 10
-        bird[1].y = bird[1].y - 10
-        bird[2].x = bird[2].x + 10
-        bird[2].y = bird[2].y + 10
-
+        bird[0].x = bird[0].x + 80
+        bird[1].x = bird[1].x + 80
+        bird[1].y = bird[1].y - 80
+        bird[2].x = bird[2].x + 80
+        bird[2].y = bird[2].y + 80
+        if(game.space_available == 1):
+            space_up = 1
+            space_down = 1
+        else:
+            space_up = game.space < bird_pos[1]
+            space_down = game.space > bird_pos[1]
         state = [
             # Danger in front
             (bird[0].colliderect(game.upper_pipe) or bird[0].colliderect(game.upper_pipe)),
@@ -52,18 +56,18 @@ class Agent:
             dir_down,
             
             # Next empty space location 
-            game.space < bird_pos[1], #empty space above
-            game.space > bird_pos[1] #empty space below
+            space_up, #empty space above
+            space_down #empty space below
             ]
 
         return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
+        self.memory.append((state, action, reward, next_state, done)) # popleft if self.max_memory is reached
 
     def train_long_memory(self):
-        if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+        if len(self.memory) > self.batch_size:
+            mini_sample = random.sample(self.memory, self.batch_size) # list of tuples
         else:
             mini_sample = self.memory
 
@@ -134,7 +138,3 @@ def train():
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
-
-
-if __name__ == '__main__':
-    train()

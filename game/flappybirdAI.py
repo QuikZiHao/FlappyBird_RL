@@ -19,6 +19,7 @@ class FlappyBirdAI:
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
         self.lower_pipe = pygame.Rect(400, 280, 40, 120)
         self.space = 0
+        self.space_available = 0
 
     def reset(self):
         self.frame_iter = self.frame_iter + 1
@@ -126,6 +127,8 @@ class FlappyBirdAI:
                     self.lower_pipe.y = 400 - self.lower_pipe.h
                     self.space = (self.upper_pipe.y + self.lower_pipe.y)/2
                     bottom_pipe_img = pygame.transform.scale(bottom_pipe_img, (40, self.lower_pipe.h))
+                if(abs(self.bird.x + 50 - self.upper_pipe.x) > 10 and abs(self.bird.y - 0) > 10 and abs(self.bird.y - 280) > 10):
+                    self.space_available = 1
 
                 if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                     state = "game over"
