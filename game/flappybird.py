@@ -69,10 +69,9 @@ class FlappyBird:
                     sys.exit()
 
             if score % 30 == 0 and speed_up_coeff < 5:
-                if speed_up_flag == True:
-                    continue
-                speed_up_flag = True
-                speed_up_coeff += 1
+                if speed_up_flag != True:
+                    speed_up_flag = True
+                    speed_up_coeff += 1
 
             if score % 30 == 1 and speed_up_flag:
                 speed_up_flag = False
