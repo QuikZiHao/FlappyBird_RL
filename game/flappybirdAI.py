@@ -4,6 +4,8 @@ import random
 import time
 import numpy as np
 
+pygame.init()
+
 class FlappyBirdAI:
     def __init__(self, window_size_width:int, window_size_height:int):
         self.window_size = (window_size_width,window_size_height)
@@ -14,10 +16,7 @@ class FlappyBirdAI:
         self.frame_iter = 0
         self.game_over = False
         self.background_image, self.upper_pipe_img, self.bottom_pipe_img = self.game_init()
-        self.bird_pos = (0,0)
         self.direction = 0
-        self.space = 0
-        self.space_available = 0
         self.main_window = pygame.display.set_mode((500, 400))
         self.bird_img_list = self.bird_img_init()
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
@@ -30,6 +29,8 @@ class FlappyBirdAI:
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
         self.lower_pipe = pygame.Rect(400, 280, 40, 120)
         self.bird = pygame.Rect(130, 150, 50, 50)
+        self.bird_img_init()
+        self.game_init()
         
     def bird_img_init(self):
         bird1_image = pygame.image.load(r'game\source\bird1.png')
@@ -43,7 +44,6 @@ class FlappyBirdAI:
         return [bird1_image, bird2_image, bird3_image, bird4_image]
     
     def game_init(self):
-        pygame.init()
         background_image = pygame.image.load(r'game\source\background.png')
         background_image = pygame.transform.scale(background_image, (500, 400))
         upper_pipe_img =  pygame.image.load(r'game\source\pipe_top.png')
@@ -83,6 +83,9 @@ class FlappyBirdAI:
                     sys.exit()
 
             if score % 30 == 0 and speed_up_coeff < 5 and score != 0:
+                if speed_up_flag == True:
+                    continue
+                speed_up_flag = True
                 speed_up_coeff += 1
 
             self.main_window.blit(self.background_image, (0,0))
@@ -91,11 +94,6 @@ class FlappyBirdAI:
             self.main_window.blit(self.bird_img_list[bird_idx // bird_ratio], (self.bird.x, self.bird.y))
             self.main_window.blit(score_renderer, (30, 30)) 
 
-            if state == "beginning":
-                keypressed = pygame.key.get_pressed()
-                if keypressed[pygame.K_SPACE]:
-                    state = "playing"
-                    
             if state == "playing":
                 self.game_over = False
                 bird_idx += 1
@@ -126,10 +124,10 @@ class FlappyBirdAI:
                     self.upper_pipe_img = pygame.transform.scale(self.upper_pipe_img, (40, self.upper_pipe.h))
                     self.lower_pipe.h = 240 - self.upper_pipe.h
                     self.lower_pipe.y = 400 - self.lower_pipe.h
-                    self.space = (self.upper_pipe.y + self.lower_pipe.y)/2
+                    # self.space = (self.upper_pipe.y + self.lower_pipe.y)/2
                     self.bottom_pipe_img = pygame.transform.scale(self.bottom_pipe_img, (40, self.lower_pipe.h))
-                if(abs(self.bird.x + 50 - self.upper_pipe.x) > 10 and abs(self.bird.y - 0) > 10 and abs(self.bird.y - 280) > 10):
-                    self.space_available = 1
+                # if(abs(self.bird.x + 50 - self.upper_pipe.x) > 10 and abs(self.bird.y - 0) > 10 and abs(self.bird.y - 280) > 10):
+                #     self.space_available = 1
 
                 if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                     state = "game over"

@@ -16,48 +16,55 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=self.max_memory) # popleft()
-        self.model = Linear_QNet(7, 32, 64, 1)
+        self.model = Linear_QNet(6, 32, 64, 1)
         # self.model = self.model.load_state_dict(torch.load("model.pth"))
         self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
     def get_state(self, game):
         # Position of bird
-        bird_pos = game.bird_pos
+        # bird_pos = game.bird_pos
         # point_up = [bird_pos[0]+10,bird_pos[1]-10]
         # point_down = [bird_pos[0]+10,bird_pos[1]+10]
         # point_front = [bird_pos[0]+10,bird_pos[1]]
 
         dir_up = game.direction == 1
         dir_down = game.direction == 0
-        bird = [(game.bird).copy(), (game.bird).copy(), (game.bird).copy()] # 0: front, 1: up, 2: down
-        bird[0].x = bird[0].x + 80
-        bird[1].x = bird[1].x + 80
-        bird[1].y = bird[1].y - 80
-        bird[2].x = bird[2].x + 80
-        bird[2].y = bird[2].y + 80
-        if(game.space_available == 1):
-            space_up = True
-            space_down = True
-        else:
-            space_up = game.space < bird_pos[1]
-            space_down = game.space > bird_pos[1]
+        # bird = [(game.bird).copy(), (game.bird).copy(), (game.bird).copy()] # 0: front, 1: up, 2: down
+        # bird[0].x = bird[0].x + 80
+        # bird[1].x = bird[1].x + 80
+        # bird[1].y = bird[1].y - 80
+        # bird[2].x = bird[2].x + 80
+        # bird[2].y = bird[2].y + 80
+        # if(game.space_available == 1):
+        #     space_up = True
+        #     space_down = True
+        # else:
+        #     space_up = game.space < bird_pos[1]
+        #     space_down = game.space > bird_pos[1]
         state = [
-            # Danger in front
-            (bird[0].colliderect(game.upper_pipe) or bird[0].colliderect(game.upper_pipe)),
+            # # Danger in front
+            # (bird[0].colliderect(game.upper_pipe) or bird[0].colliderect(game.upper_pipe)),
 
-            # Danger up
-            (bird[1].colliderect(game.upper_pipe) or bird[1].colliderect(game.upper_pipe)),
+            # # Danger up
+            # (bird[1].colliderect(game.upper_pipe) or bird[1].colliderect(game.upper_pipe)),
 
-            # Danger down
-            (bird[2].colliderect(game.upper_pipe) or bird[2].colliderect(game.upper_pipe)),
+            # # Danger down
+            # (bird[2].colliderect(game.upper_pipe) or bird[2].colliderect(game.upper_pipe)),
+
+            # Bird location
+            game.bird.x,
+            game.bird.y,
             
             # Move direction
             dir_up,
             dir_down,
             
-            # Next empty space location 
-            space_up, #empty space above
-            space_down #empty space below
+            # Pipe location
+            game.upper_pipe.y + game.upper_pipe.h,
+            game.lower_pipe.y
+            # # Next empty space location 
+            # space_up, #empty space above
+            # space_down #empty space below
             ]
         print(state)
 
