@@ -126,7 +126,7 @@ class FlappyBirdAI:
 
             if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                 state = "game over"
-                self.reward -= 10
+                self.reward -= 50
                 self.game_over = True
 
             if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
