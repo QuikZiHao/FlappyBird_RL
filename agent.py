@@ -36,8 +36,8 @@ class Agent:
         bird[2].x = bird[2].x + 80
         bird[2].y = bird[2].y + 80
         if(game.space_available == 1):
-            space_up = 1
-            space_down = 1
+            space_up = True
+            space_down = True
         else:
             space_up = game.space < bird_pos[1]
             space_down = game.space > bird_pos[1]
@@ -59,6 +59,7 @@ class Agent:
             space_up, #empty space above
             space_down #empty space below
             ]
+        print(state)
 
         return np.array(state, dtype=int)
 
@@ -112,7 +113,7 @@ def train():
         final_move = agent.get_action(state_old)
 
         # perform move and get new state
-        reward, done, score = game.run(final_move)
+        reward, done, score = game._run(final_move)
         state_new = agent.get_state(game)
 
         # train short memory

@@ -13,17 +13,23 @@ class FlappyBirdAI:
         self.speed = 1 #change this for training
         self.frame_iter = 0
         self.game_over = False
+        self.background_image, self.upper_pipe_img, self.bottom_pipe_img = self.game_init()
         self.bird_pos = (0,0)
         self.direction = 0
-        self.bird = pygame.Rect(130, 150, 50, 50)
-        self.upper_pipe = pygame.Rect(400, 0, 40, 120)
-        self.lower_pipe = pygame.Rect(400, 280, 40, 120)
         self.space = 0
         self.space_available = 0
+        self.main_window = pygame.display.set_mode((500, 400))
+        self.bird_img_list = self.bird_img_init()
+        self.upper_pipe = pygame.Rect(400, 0, 40, 120)
+        self.lower_pipe = pygame.Rect(400, 280, 40, 120)
+        self.bird = pygame.Rect(130, 150, 50, 50)
+        self.clock = pygame.time.Clock()
 
     def reset(self):
         self.frame_iter = self.frame_iter + 1
-        self.run()
+        self.upper_pipe = pygame.Rect(400, 0, 40, 120)
+        self.lower_pipe = pygame.Rect(400, 280, 40, 120)
+        self.bird = pygame.Rect(130, 150, 50, 50)
         
     def bird_img_init(self):
         bird1_image = pygame.image.load(r'game\source\bird1.png')
@@ -35,26 +41,21 @@ class FlappyBirdAI:
         bird4_image = pygame.image.load(r'game\source\bird4.png')
         bird4_image = pygame.transform.scale(bird4_image, (50, 50))
         return [bird1_image, bird2_image, bird3_image, bird4_image]
-
-    def run(self, action):
-        reward = 0
+    
+    def game_init(self):
         pygame.init()
-        mainWindow = pygame.display.set_mode((500, 400))
-        bird_img_list = self.bird_img_init()
         background_image = pygame.image.load(r'game\source\background.png')
         background_image = pygame.transform.scale(background_image, (500, 400))
         upper_pipe_img =  pygame.image.load(r'game\source\pipe_top.png')
         upper_pipe_img = pygame.transform.scale(upper_pipe_img, (40, 120))
         bottom_pipe_img =  pygame.image.load(r'game\source\pipe_bottom.png')
         bottom_pipe_img = pygame.transform.scale(bottom_pipe_img, (40, 120))
+        return background_image, upper_pipe_img, bottom_pipe_img
+
+    def _run(self, action):
+        reward = 0
         score = 0
 
-        self.upper_pipe = pygame.Rect(400, 0, 40, 120)
-        self.lower_pipe = pygame.Rect(400, 280, 40, 120)
-        self.bird = pygame.Rect(130, 150, 50, 50)
-
-
-        clock = pygame.time.Clock()
         speed_up_coeff = 0
         velocity_pipe = 5
         velocity_bird = 0
@@ -84,11 +85,11 @@ class FlappyBirdAI:
             if score % 30 == 0 and speed_up_coeff < 5 and score != 0:
                 speed_up_coeff += 1
 
-            mainWindow.blit(background_image, (0,0))
-            mainWindow.blit(upper_pipe_img, (self.upper_pipe.x, self.upper_pipe.y))
-            mainWindow.blit(bottom_pipe_img, (self.lower_pipe.x, self.lower_pipe.y))
-            mainWindow.blit(bird_img_list[bird_idx // bird_ratio], (self.bird.x, self.bird.y))
-            mainWindow.blit(score_renderer, (30, 30)) 
+            self.main_window.blit(self.background_image, (0,0))
+            self.main_window.blit(self.upper_pipe_img, (self.upper_pipe.x, self.upper_pipe.y))
+            self.main_window.blit(self.bottom_pipe_img, (self.lower_pipe.x, self.lower_pipe.y))
+            self.main_window.blit(self.bird_img_list[bird_idx // bird_ratio], (self.bird.x, self.bird.y))
+            self.main_window.blit(score_renderer, (30, 30)) 
 
             if state == "beginning":
                 keypressed = pygame.key.get_pressed()
@@ -98,7 +99,7 @@ class FlappyBirdAI:
             if state == "playing":
                 self.game_over = False
                 bird_idx += 1
-                if bird_idx >= (bird_ratio * len(bird_img_list)):
+                if bird_idx >= (bird_ratio * len(self.bird_img_list)):
                     bird_idx = 0
 
                 self.upper_pipe.x -= velocity_pipe + speed_up_coeff
@@ -122,11 +123,11 @@ class FlappyBirdAI:
                     self.lower_pipe.x = 500
 
                     self.upper_pipe.h = random.randint(40, 200)
-                    upper_pipe_img = pygame.transform.scale(upper_pipe_img, (40, self.upper_pipe.h))
+                    self.upper_pipe_img = pygame.transform.scale(self.upper_pipe_img, (40, self.upper_pipe.h))
                     self.lower_pipe.h = 240 - self.upper_pipe.h
                     self.lower_pipe.y = 400 - self.lower_pipe.h
                     self.space = (self.upper_pipe.y + self.lower_pipe.y)/2
-                    bottom_pipe_img = pygame.transform.scale(bottom_pipe_img, (40, self.lower_pipe.h))
+                    self.bottom_pipe_img = pygame.transform.scale(self.bottom_pipe_img, (40, self.lower_pipe.h))
                 if(abs(self.bird.x + 50 - self.upper_pipe.x) > 10 and abs(self.bird.y - 0) > 10 and abs(self.bird.y - 280) > 10):
                     self.space_available = 1
 
@@ -144,7 +145,7 @@ class FlappyBirdAI:
 
 
             if state == "pause":
-                mainWindow.blit(pause_text, (200, 150))
+                self.main_window.blit(pause_text, (200, 150))
 
                 keypressed = pygame.key.get_pressed()
                 if keypressed[pygame.K_SPACE]:
@@ -154,11 +155,11 @@ class FlappyBirdAI:
             if state == "game over":
                 speed_up_coeff = 0
                 
-                mainWindow.blit(gameover_text, (160, 100))
-                mainWindow.blit(play_again_text, (25, 300))
+                self.main_window.blit(gameover_text, (160, 100))
+                self.main_window.blit(play_again_text, (25, 300))
 
                 score_text = my_font.render("Your Score: " + str(score), True, (255, 0, 0))
-                mainWindow.blit(score_text, (180, 160))
+                self.main_window.blit(score_text, (180, 160))
                 # time.sleep(2)
 
                 keypressed = pygame.key.get_pressed()
