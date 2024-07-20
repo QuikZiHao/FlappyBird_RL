@@ -15,6 +15,7 @@ class Linear_QNet(nn.Module):
         x = self.linear1(x)
         x = self.linear2(x)
         x = self.linear3(x)
+        x = F.relu(x)
         x = F.sigmoid(x)
         return x
 

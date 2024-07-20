@@ -14,7 +14,7 @@ class FlappyBirdAI:
         self.font_style = ("Jokerman Regular",50)
         self.clock = pygame.time.Clock()
         self.fps = 30
-        self.speed = 100 #change this for training
+        self.speed = 20 #change this for training
         self.frame_iter = 0
         self.game_over = False
         self.background_image, self.upper_pipe_img, self.bottom_pipe_img = self.game_init()
@@ -131,8 +131,11 @@ class FlappyBirdAI:
 
             if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
                 self.score += 1
-                self.reward += 10
+                self.reward += 20
                 self.score_renderer = self.my_font.render(str(self.score), True, (255, 0, 0))
+            
+            self.reward += 2
+            
 
         if state == "pause":
             self.main_window.blit(self.pause_text, (200, 150))
