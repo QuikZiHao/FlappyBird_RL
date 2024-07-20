@@ -5,7 +5,7 @@ import argparse
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode",type=str,default='play')
+    parser.add_argument("--mode",type=str,default='train')
     args = parser.parse_args()
     return args
 

@@ -94,6 +94,9 @@ class FlappyBirdAI:
             self.main_window.blit(score_renderer, (30, 30)) 
 
             if state == "playing":
+                if np.array_equal(action, [1]):
+                    velocity_bird = -7 #fly up
+                    self.direction = 1 #up
                 self.game_over = False
                 bird_idx += 1
                 if bird_idx >= (bird_ratio * len(self.bird_img_list)):
@@ -111,9 +114,7 @@ class FlappyBirdAI:
                 #     velocity_bird = -7
                 # if keypressed[pygame.K_p]:
                 #     state = "pause"
-                if np.array_equal(action, [1]):
-                    velocity_bird = -7 #fly up
-                    self.direction = 1 #up
+
                 
                 if self.upper_pipe.x <= -40:
                     self.upper_pipe.x = 500

@@ -16,7 +16,7 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=self.max_memory) # popleft()
-        self.model = Linear_QNet(6, 32, 64, 1)
+        self.model = Linear_QNet(5, 32, 64, 1)
         # self.model = self.model.load_state_dict(torch.load("model.pth"))
         self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
@@ -52,7 +52,6 @@ class Agent:
             # (bird[2].colliderect(game.upper_pipe) or bird[2].colliderect(game.upper_pipe)),
 
             # Bird location
-            game.bird.x,
             game.bird.y,
             
             # Move direction
@@ -112,9 +111,10 @@ def train():
     record = 0
     agent = Agent()
     game = FlappyBirdAI(500,400)
+    state_new = [150, False, True, 120, 280]
     while True:
         # get old state
-        state_old = agent.get_state(game)
+        state_old = state_new
 
         # get move
         final_move = agent.get_action(state_old)
