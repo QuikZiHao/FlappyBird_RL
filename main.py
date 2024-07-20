@@ -1,6 +1,5 @@
 from game.flappybird import FlappyBird
-from game.flappybirdAI import FlappyBirdAI
-from agent import train
+from game.flappybirdAI import FlappyBirdAI, Train
 import argparse
 
 def get_args():
@@ -17,4 +16,5 @@ if __name__ == "__main__":
         game.run()
 
     elif(args.mode == 'train'):
-        train()
+        game = Train()
+        game.train()

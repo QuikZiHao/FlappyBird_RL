@@ -3,6 +3,8 @@ import sys
 import random
 import time
 import numpy as np
+from agent import Agent
+from model.helper import plot
 
 pygame.init()
 
@@ -12,25 +14,49 @@ class FlappyBirdAI:
         self.font_style = ("Jokerman Regular",50)
         self.clock = pygame.time.Clock()
         self.fps = 30
-        self.speed = 1 #change this for training
+        self.speed = 100 #change this for training
         self.frame_iter = 0
         self.game_over = False
         self.background_image, self.upper_pipe_img, self.bottom_pipe_img = self.game_init()
         self.direction = 0
+        self.score = 0
+        self.reward = 0 
+        self.speed_up_coeff = 0
+        self.velocity_pipe = 5
+        self.velocity_bird = 0
+        self.accelration_bird = 1
+        self.bird_idx = 0
+        self.bird_ratio = 5
+
         self.main_window = pygame.display.set_mode((500, 400))
         self.bird_img_list = self.bird_img_init()
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
         self.lower_pipe = pygame.Rect(400, 280, 40, 120)
         self.bird = pygame.Rect(130, 150, 50, 50)
         self.clock = pygame.time.Clock()
+        self.my_font = pygame.font.SysFont("Jokerman Regular", 50)
+        self.gameover_text = self.my_font.render("Game Over", True, (255, 0, 0))
+        self.pause_text = self.my_font.render("Pause", True, (255, 0, 0))
+        self.my_font = pygame.font.SysFont("Jokerman Regular", 30)
+        self.play_again_text = self.my_font.render("Press 'SPACE' to play again or 'ESCAPE' to exit", True, (255, 0, 0))
+        self.my_font = pygame.font.SysFont("Jokerman Regular", 35)
+        self.score_text = self.my_font.render("Your Score: " + str(self.score), True, (255, 0, 0))
+        self.score_renderer = self.my_font.render("0", True, (255, 0, 0))
+
 
     def reset(self):
         self.frame_iter = self.frame_iter + 1
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
         self.lower_pipe = pygame.Rect(400, 280, 40, 120)
         self.bird = pygame.Rect(130, 150, 50, 50)
-        self.bird_img_init()
-        self.game_init()
+        self.reward = 0
+        self.score = 0
+        self.speed_up_coeff = 0
+        self.velocity_pipe = 5
+        self.velocity_bird = 0
+        self.accelration_bird = 1
+        self.bird_idx = 0
+        self.bird_ratio = 5
         
     def bird_img_init(self):
         bird1_image = pygame.image.load(r'game\source\bird1.png')
@@ -53,140 +79,125 @@ class FlappyBirdAI:
         return background_image, upper_pipe_img, bottom_pipe_img
 
     def _run(self, action):
-        reward = 0
-        score = 0
-
-        speed_up_coeff = 0
-        velocity_pipe = 5
-        velocity_bird = 0
-        accelration_bird = 1
-        bird_idx = 0
-        bird_ratio = 5
-
-        my_font = pygame.font.SysFont("Jokerman Regular", 50)
-        gameover_text = my_font.render("Game Over", True, (255, 0, 0))
-        pause_text = my_font.render("Pause", True, (255, 0, 0))
-
-        my_font = pygame.font.SysFont("Jokerman Regular", 30)
-        play_again_text = my_font.render("Press 'SPACE' to play again or 'ESCAPE' to exit", True, (255, 0, 0))
-
-        my_font = pygame.font.SysFont("Jokerman Regular", 35)
-        score_text = my_font.render("Your Score: " + str(score), True, (255, 0, 0))
-        score_renderer = my_font.render("0", True, (255, 0, 0))
-
         state = "playing"
 
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        if self.score % 30 == 0 and self.speed_up_coeff < 5 and self.score != 0:
+            if speed_up_flag == True:
+                speed_up_flag = True
+                self.speed_up_coeff += 1
+
+        self.main_window.blit(self.background_image, (0,0))
+        self.main_window.blit(self.upper_pipe_img, (self.upper_pipe.x, self.upper_pipe.y))
+        self.main_window.blit(self.bottom_pipe_img, (self.lower_pipe.x, self.lower_pipe.y))
+        self.main_window.blit(self.bird_img_list[self.bird_idx // self.bird_ratio], (self.bird.x, self.bird.y))
+        self.main_window.blit(self.score_renderer, (30, 30)) 
+
+        if state == "playing":
+            if np.array_equal(action, [1]):
+                self.velocity_bird = -7 #fly up
+                self.direction = 1 #up
+            self.game_over = False
+            self.bird_idx += 1
+            if self.bird_idx >= (self.bird_ratio * len(self.bird_img_list)):
+                self.bird_idx = 0
+
+            self.upper_pipe.x -= self.velocity_pipe + self.speed_up_coeff
+            self.lower_pipe.x -= self.velocity_pipe + self.speed_up_coeff
+
+            self.velocity_bird += self.accelration_bird + self.speed_up_coeff
+            self.bird.y += self.velocity_bird
+            self.direction = 0 #down
+    
+            if self.upper_pipe.x <= -40:
+                self.upper_pipe.x = 500
+                self.lower_pipe.x = 500
+
+                self.upper_pipe.h = random.randint(40, 200)
+                self.upper_pipe_img = pygame.transform.scale(self.upper_pipe_img, (40, self.upper_pipe.h))
+                self.lower_pipe.h = 240 - self.upper_pipe.h
+                self.lower_pipe.y = 400 - self.lower_pipe.h
+
+                self.bottom_pipe_img = pygame.transform.scale(self.bottom_pipe_img, (40, self.lower_pipe.h))
+
+            if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
+                state = "game over"
+                self.reward -= 10
+                self.game_over = True
+
+            if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
+                self.score += 1
+                self.reward += 10
+                self.score_renderer = self.my_font.render(str(self.score), True, (255, 0, 0))
+
+        if state == "pause":
+            self.main_window.blit(self.pause_text, (200, 150))
+
+            keypressed = pygame.key.get_pressed()
+            if keypressed[pygame.K_SPACE]:
+                state = "playing"
+            
+        if state == "game over":
+            self.speed_up_coeff = 0
+            
+            self.main_window.blit(self.gameover_text, (160, 100))
+            self.main_window.blit(self.play_again_text, (25, 300))
+
+            score_text = self.my_font.render("Your Score: " + str(self.score), True, (255, 0, 0))
+            self.main_window.blit(score_text, (180, 160))
+
+        self.clock.tick(self.speed*self.fps)
+        pygame.display.update()
+
+        return self.reward, self.game_over, self.score
+
+
+class Train:
+    def __init__(self):
+        self.plot_scores = []
+        self.plot_mean_scores = []
+        self.total_score = 0
+        self.record = 0
+        self.agent = Agent()
+        self.game = FlappyBirdAI(500,400)
+        self.state_new = [150, False, True, 120, 280]
+
+    def train(self):
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+            # get old state
+            state_old = self.state_new
 
-            if score % 30 == 0 and speed_up_coeff < 5 and score != 0:
-                if speed_up_flag == True:
-                    speed_up_flag = True
-                    speed_up_coeff += 1
+            # get move
+            final_move = self.agent.get_action(state_old)
 
-            self.main_window.blit(self.background_image, (0,0))
-            self.main_window.blit(self.upper_pipe_img, (self.upper_pipe.x, self.upper_pipe.y))
-            self.main_window.blit(self.bottom_pipe_img, (self.lower_pipe.x, self.lower_pipe.y))
-            self.main_window.blit(self.bird_img_list[bird_idx // bird_ratio], (self.bird.x, self.bird.y))
-            self.main_window.blit(score_renderer, (30, 30)) 
+            # perform move and get new state
+            reward, done, score = self.game._run(final_move)
+            self.state_new = self.agent.get_state(self.game)
 
-            if state == "playing":
-                if np.array_equal(action, [1]):
-                    velocity_bird = -7 #fly up
-                    self.direction = 1 #up
-                self.game_over = False
-                bird_idx += 1
-                if bird_idx >= (bird_ratio * len(self.bird_img_list)):
-                    bird_idx = 0
+            # train short memory
+            self.agent.train_short_memory(state_old, final_move, reward, self.state_new, done)
 
-                self.upper_pipe.x -= velocity_pipe + speed_up_coeff
-                self.lower_pipe.x -= velocity_pipe + speed_up_coeff
+            # remember
+            self.agent.remember(state_old, final_move, reward, self.state_new, done)
 
-                velocity_bird += accelration_bird + speed_up_coeff
-                self.bird.y += velocity_bird
-                self.direction = 0 #down
+            if done:
+                # train long memory, plot result
+                self.game.reset()
+                self.agent.n_games += 1
+                self.agent.train_long_memory()
 
-                # keypressed = pygame.key.get_pressed()
-                # if keypressed[pygame.K_SPACE]:
-                #     velocity_bird = -7
-                # if keypressed[pygame.K_p]:
-                #     state = "pause"
+                if score > self.record:
+                    self.record = score
+                    self.agent.model.save()
 
-                
-                if self.upper_pipe.x <= -40:
-                    self.upper_pipe.x = 500
-                    self.lower_pipe.x = 500
+                print('Game', self.agent.n_games, 'Score', score, 'Record:', self.record)
 
-                    self.upper_pipe.h = random.randint(40, 200)
-                    self.upper_pipe_img = pygame.transform.scale(self.upper_pipe_img, (40, self.upper_pipe.h))
-                    self.lower_pipe.h = 240 - self.upper_pipe.h
-                    self.lower_pipe.y = 400 - self.lower_pipe.h
-                    # self.space = (self.upper_pipe.y + self.lower_pipe.y)/2
-                    self.bottom_pipe_img = pygame.transform.scale(self.bottom_pipe_img, (40, self.lower_pipe.h))
-                # if(abs(self.bird.x + 50 - self.upper_pipe.x) > 10 and abs(self.bird.y - 0) > 10 and abs(self.bird.y - 280) > 10):
-                #     self.space_available = 1
-
-                if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
-                    state = "game over"
-                    reward -= 10
-                    self.game_over = True
-
-                if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
-                    score += 1
-                    reward += 10
-                    score_renderer = my_font.render(str(score), True, (255, 0, 0))
-
-                self.bird_pos = (self.bird.x, self.bird.y)
-
-
-            if state == "pause":
-                self.main_window.blit(pause_text, (200, 150))
-
-                keypressed = pygame.key.get_pressed()
-                if keypressed[pygame.K_SPACE]:
-                    state = "playing"
-
-                
-            if state == "game over":
-                speed_up_coeff = 0
-                
-                self.main_window.blit(gameover_text, (160, 100))
-                self.main_window.blit(play_again_text, (25, 300))
-
-                score_text = my_font.render("Your Score: " + str(score), True, (255, 0, 0))
-                self.main_window.blit(score_text, (180, 160))
-                # time.sleep(2)
-
-                keypressed = pygame.key.get_pressed()
-                if keypressed[pygame.K_SPACE]:
-                    self.bird.x = 130
-                    self.bird.y = 150
-                    self.upper_pipe.x = 400
-                    self.lower_pipe.x = 400
-                    score = 0
-                    score_renderer = my_font.render(str(score), True, (255, 0, 0))
-                    state = "playing"
-                if keypressed[pygame.K_ESCAPE]:
-                    pygame.quit()
-                    sys.exit()
-
-            self.clock.tick(self.speed*self.fps)
-            pygame.display.update()
-
-            return reward, self.game_over, score
-
-
-
-
-
-
-
-
-
-
-
-
-
+                self.plot_scores.append(score)
+                self.total_score += score
+                mean_score = self.total_score / self.agent.n_games
+                self.plot_mean_scores.append(mean_score)
+                plot(self.plot_scores, self.plot_mean_scores)
