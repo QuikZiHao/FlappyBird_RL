@@ -9,12 +9,12 @@ from model.helper import plot
 pygame.init()
 
 class FlappyBirdAI:
-    def __init__(self, window_size_width:int, window_size_height:int):
+    def __init__(self, window_size_width:int, window_size_height:int, train_speed):
         self.window_size = (window_size_width,window_size_height)
         self.font_style = ("Jokerman Regular",50)
         self.clock = pygame.time.Clock()
         self.fps = 30
-        self.speed = 20 #change this for training
+        self.speed = train_speed #change this for training
         self.frame_iter = 0
         self.game_over = False
         self.background_image, self.upper_pipe_img, self.bottom_pipe_img = self.game_init()
@@ -101,6 +101,8 @@ class FlappyBirdAI:
             if np.array_equal(action, [1]):
                 self.velocity_bird = -7 #fly up
                 self.direction = 1 #up
+            else:
+                self.direction = 0 #down
             self.game_over = False
             self.bird_idx += 1
             if self.bird_idx >= (self.bird_ratio * len(self.bird_img_list)):
@@ -111,7 +113,7 @@ class FlappyBirdAI:
 
             self.velocity_bird += self.accelration_bird + self.speed_up_coeff
             self.bird.y += self.velocity_bird
-            self.direction = 0 #down
+            
     
             if self.upper_pipe.x <= -40:
                 self.upper_pipe.x = 500
@@ -126,7 +128,10 @@ class FlappyBirdAI:
 
             if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                 state = "game over"
-                self.reward -= 50
+                if(self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe)):
+                    self.reward -= 50
+                elif self.bird.y < -30 or self.bird.y > 400:
+                    self.reward -= 100
                 self.game_over = True
 
             if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
@@ -160,14 +165,15 @@ class FlappyBirdAI:
 
 
 class Train:
-    def __init__(self):
+    def __init__(self, train_speed = 1):
         self.plot_scores = []
         self.plot_mean_scores = []
         self.total_score = 0
         self.record = 0
+        self.train_speed = train_speed
         self.agent = Agent()
-        self.game = FlappyBirdAI(500,400)
-        self.state_new = [150, False, True, 120, 280]
+        self.game = FlappyBirdAI(500,400, self.train_speed)
+        self.state_new = [150, False, True, False, False, 400, 120, 400, 280]
 
     def train(self):
         while True:
@@ -197,7 +203,7 @@ class Train:
                     self.record = score
                     self.agent.model.save()
 
-                print('Game', self.agent.n_games, 'Score', score, 'Record:', self.record)
+                print('Game', self.agent.n_games, 'Score', score, 'Record:', self.record, 'Reward:', reward)
 
                 self.plot_scores.append(score)
                 self.total_score += score

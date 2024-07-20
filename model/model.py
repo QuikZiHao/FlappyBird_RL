@@ -10,12 +10,15 @@ class Linear_QNet(nn.Module):
         self.linear1 = nn.Linear(input_size, hidden_size1)
         self.linear2 = nn.Linear(hidden_size1, hidden_size2)
         self.linear3 = nn.Linear(hidden_size2,output_size)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):
         x = self.linear1(x)
+        x = self.dropout(x)
         x = self.linear2(x)
+        x = self.dropout(x)
         x = self.linear3(x)
-        x = F.relu(x)
+        # x = F.relu(x)
         x = F.sigmoid(x)
         return x
 

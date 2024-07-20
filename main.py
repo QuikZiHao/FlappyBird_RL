@@ -5,6 +5,7 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode",type=str,default='train')
+    parser.add_argument("--speed",type=int,default=1)
     args = parser.parse_args()
     return args
 
@@ -16,5 +17,5 @@ if __name__ == "__main__":
         game.run()
 
     elif(args.mode == 'train'):
-        game = Train()
+        game = Train(args.speed)
         game.train()
