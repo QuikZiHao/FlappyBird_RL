@@ -84,9 +84,8 @@ class FlappyBirdAI:
 
             if score % 30 == 0 and speed_up_coeff < 5 and score != 0:
                 if speed_up_flag == True:
-                    continue
-                speed_up_flag = True
-                speed_up_coeff += 1
+                    speed_up_flag = True
+                    speed_up_coeff += 1
 
             self.main_window.blit(self.background_image, (0,0))
             self.main_window.blit(self.upper_pipe_img, (self.upper_pipe.x, self.upper_pipe.y))
