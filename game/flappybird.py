@@ -122,12 +122,12 @@ class FlappyBird:
                     score_renderer = my_font.render(str(score), True, (255, 0, 0))
 
 
-            if state == "pause":
-                mainWindow.blit(pause_text, (200, 150))
+            # if state == "pause":
+            #     mainWindow.blit(pause_text, (200, 150))
 
-                keypressed = pygame.key.get_pressed()
-                if keypressed[pygame.K_SPACE]:
-                    state = "playing"
+            #     keypressed = pygame.key.get_pressed()
+            #     if keypressed[pygame.K_SPACE]:
+            #         state = "playing"
 
                 
             if state == "game over":
@@ -140,18 +140,18 @@ class FlappyBird:
                 mainWindow.blit(score_text, (180, 160))
                 # time.sleep(2)
 
-                keypressed = pygame.key.get_pressed()
-                if keypressed[pygame.K_SPACE]:
-                    bird.x = 130
-                    bird.y = 150
-                    upper_pipe.x = 400
-                    lower_pipe.x = 400
-                    score = 0
-                    score_renderer = my_font.render(str(score), True, (255, 0, 0))
-                    state = "playing"
-                if keypressed[pygame.K_ESCAPE]:
-                    pygame.quit()
-                    sys.exit()
+                # keypressed = pygame.key.get_pressed()
+                # if keypressed[pygame.K_SPACE]:
+                #     bird.x = 130
+                #     bird.y = 150
+                #     upper_pipe.x = 400
+                #     lower_pipe.x = 400
+                #     score = 0
+                #     score_renderer = my_font.render(str(score), True, (255, 0, 0))
+                #     state = "playing"
+                # if keypressed[pygame.K_ESCAPE]:
+                #     pygame.quit()
+                #     sys.exit()
 
             self.clock.tick(self.speed*self.fps)
             pygame.display.update()

@@ -8,12 +8,12 @@ class Agent:
     def __init__(self):
         self.max_memory = 100000
         self.batch_size = 1000
-        self.lr = 0.001
+        self.lr = 0.01
         self.n_games = 0
         self.epsilon = 0 # randomness
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=self.max_memory) # popleft()
-        self.model = Linear_QNet(9, 32, 64, 1)
+        self.model = Linear_QNet(6, 128, 256, 512, 1)
         self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
     def get_state(self, game):
@@ -24,23 +24,26 @@ class Agent:
 
         is_above = game.bird.y < game.upper_pipe.y + game.upper_pipe.h
         is_below = game.bird.y > game.lower_pipe.y
-
+        close_to_top = game.bird.y-20 <= 0
+        close_to_bottom = game.bird.y+20 >= 400
         state = [
             # Bird location
-            game.bird.y,
+            # game.bird.y,
             
             # Move direction
             dir_up,
             dir_down,
+            close_to_top,
+            close_to_bottom,
             is_above,
             is_below,
             # Pipe location
-            game.upper_pipe.x,
-            game.upper_pipe.y + game.upper_pipe.h,
-            game.lower_pipe.x,
-            game.lower_pipe.y
+            # game.upper_pipe.x,
+            # game.upper_pipe.y + game.upper_pipe.h,
+            # game.lower_pipe.x,
+            # game.lower_pipe.y
             ]
-        print(state)
+        # print(state)
 
         return np.array(state, dtype=int)
 
@@ -63,7 +66,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 120 - self.n_games
+        self.epsilon = 100 - self.n_games
         final_move = [0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 1)
@@ -71,7 +74,7 @@ class Agent:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
-            if(prediction >= 0.5):
+            if(prediction > 0.5):
                 final_move[0] = 1
             else:
                 final_move[0] = 0

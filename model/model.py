@@ -5,19 +5,23 @@ import torch.nn.functional as F
 import os
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
+    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size):
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size1)
         self.linear2 = nn.Linear(hidden_size1, hidden_size2)
-        self.linear3 = nn.Linear(hidden_size2,output_size)
+        self.linear3 = nn.Linear(hidden_size2, hidden_size3)
+        self.linear4 = nn.Linear(hidden_size3, output_size)
         self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):
         x = self.linear1(x)
-        x = self.dropout(x)
+        # x = F.relu(x)
+        # x = self.dropout(x)
         x = self.linear2(x)
-        x = self.dropout(x)
+        # x = F.relu(x)
+        # x = self.dropout(x)
         x = self.linear3(x)
+        x = self.linear4(x)
         # x = F.relu(x)
         x = F.sigmoid(x)
         return x
@@ -36,7 +40,7 @@ class QTrainer:
         self.lr = lr
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
+        self.optimizer = optim.AdamW(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):

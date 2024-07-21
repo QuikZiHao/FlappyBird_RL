@@ -43,7 +43,6 @@ class FlappyBirdAI:
         self.score_text = self.my_font.render("Your Score: " + str(self.score), True, (255, 0, 0))
         self.score_renderer = self.my_font.render("0", True, (255, 0, 0))
 
-
     def reset(self):
         self.frame_iter = self.frame_iter + 1
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
@@ -129,17 +128,17 @@ class FlappyBirdAI:
             if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                 state = "game over"
                 if(self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe)):
-                    self.reward -= 50
+                    self.reward -= 30
                 elif self.bird.y < -30 or self.bird.y > 400:
                     self.reward -= 100
                 self.game_over = True
 
             if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
                 self.score += 1
-                self.reward += 20
+                self.reward += 50
                 self.score_renderer = self.my_font.render(str(self.score), True, (255, 0, 0))
             
-            self.reward += 2
+            self.reward += 3
             
 
         if state == "pause":
@@ -173,7 +172,7 @@ class Train:
         self.train_speed = train_speed
         self.agent = Agent()
         self.game = FlappyBirdAI(500,400, self.train_speed)
-        self.state_new = [150, False, True, False, False, 400, 120, 400, 280]
+        self.state_new = [False, True, False, False, False, False]
 
     def train(self):
         while True:
