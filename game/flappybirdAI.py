@@ -171,8 +171,8 @@ class Train:
         self.record = 0
         self.train_speed = train_speed
         self.agent = Agent()
-        self.game = FlappyBirdAI(500,400, self.train_speed)
-        self.state_new = [False, True, False, False, False, False]
+        self.game = FlappyBirdAI(500, 400, self.train_speed)
+        self.state_new = [150, 400, 120, 400, 280, False, True, False, False, False, False]
 
     def train(self):
         while True:

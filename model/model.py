@@ -6,6 +6,7 @@ import os
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         super().__init__()
         self.linear1 = nn.Linear(input_size, hidden_size1)
         self.linear2 = nn.Linear(hidden_size1, hidden_size2)
@@ -14,12 +15,13 @@ class Linear_QNet(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):
+        x = x.to(self.device)
         x = self.linear1(x)
         # x = F.relu(x)
-        # x = self.dropout(x)
+        x = self.dropout(x)
         x = self.linear2(x)
         # x = F.relu(x)
-        # x = self.dropout(x)
+        x = self.dropout(x)
         x = self.linear3(x)
         x = self.linear4(x)
         # x = F.relu(x)
@@ -37,9 +39,10 @@ class Linear_QNet(nn.Module):
 
 class QTrainer:
     def __init__(self, model, lr, gamma):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.lr = lr
         self.gamma = gamma
-        self.model = model
+        self.model = model.to(self.device)
         self.optimizer = optim.AdamW(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
@@ -48,6 +51,10 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
+        state = state.to(self.device)
+        action = action.to(self.device)
+        reward = reward.to(self.device)
+        next_state = next_state.to(self.device)
         # (n, x)
 
         if len(state.shape) == 1:

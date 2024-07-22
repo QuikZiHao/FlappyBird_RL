@@ -7,13 +7,13 @@ from model.model import Linear_QNet, QTrainer
 class Agent:
     def __init__(self):
         self.max_memory = 100000
-        self.batch_size = 1000
-        self.lr = 0.01
+        self.batch_size = 32
+        self.lr = 0.1
         self.n_games = 0
         self.epsilon = 0 # randomness
-        self.gamma = 0.9 # discount rate
+        self.gamma = 0.1 # discount rate
         self.memory = deque(maxlen=self.max_memory) # popleft()
-        self.model = Linear_QNet(6, 128, 256, 512, 1)
+        self.model = Linear_QNet(11, 64, 128, 32, 1)
         self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
     def get_state(self, game):
@@ -28,8 +28,14 @@ class Agent:
         close_to_bottom = game.bird.y+20 >= 400
         state = [
             # Bird location
-            # game.bird.y,
+            game.bird.y,
             
+            # Pipe location
+            game.upper_pipe.x,
+            game.upper_pipe.y + game.upper_pipe.h,
+            game.lower_pipe.x,
+            game.lower_pipe.y,
+
             # Move direction
             dir_up,
             dir_down,
@@ -37,11 +43,6 @@ class Agent:
             close_to_bottom,
             is_above,
             is_below,
-            # Pipe location
-            # game.upper_pipe.x,
-            # game.upper_pipe.y + game.upper_pipe.h,
-            # game.lower_pipe.x,
-            # game.lower_pipe.y
             ]
         # print(state)
 
