@@ -13,40 +13,12 @@ class Agent:
         self.epsilon = 0 # randomness
         self.gamma = 0.1 # discount rate
         self.memory = deque(maxlen=self.max_memory) # popleft()
-        self.model = Linear_QNet(11, 64, 128, 32, 1)
+        self.model = Linear_QNet(1)
         self.trainer = QTrainer(self.model, lr=self.lr, gamma=self.gamma)
 
     def get_state(self, game):
-        dir_up = game.direction == 1
-        dir_down = game.direction == 0
-
-        # space = 400 - ((game.upper_pipe.y + game.upper_pipe.h) - game.lower_pipe.y)
-
-        is_above = game.bird.y < game.upper_pipe.y + game.upper_pipe.h
-        is_below = game.bird.y > game.lower_pipe.y
-        close_to_top = game.bird.y-20 <= 0
-        close_to_bottom = game.bird.y+20 >= 400
-        state = [
-            # Bird location
-            game.bird.y,
-            
-            # Pipe location
-            game.upper_pipe.x,
-            game.upper_pipe.y + game.upper_pipe.h,
-            game.lower_pipe.x,
-            game.lower_pipe.y,
-
-            # Move direction
-            dir_up,
-            dir_down,
-            close_to_top,
-            close_to_bottom,
-            is_above,
-            is_below,
-            ]
-        # print(state)
-
-        return np.array(state, dtype=int)
+        state = game.state_arr
+        return state
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done)) # popleft if self.max_memory is reached

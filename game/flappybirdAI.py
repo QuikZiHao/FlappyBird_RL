@@ -10,7 +10,10 @@ pygame.init()
 
 class FlappyBirdAI:
     def __init__(self, window_size_width:int, window_size_height:int, train_speed):
+        self.first_start = True
         self.window_size = (window_size_width,window_size_height)
+        # Make whole screen as 1 in state input
+        self.state_arr = np.ones((self.window_size[1], self.window_size[0]))
         self.font_style = ("Jokerman Regular",50)
         self.clock = pygame.time.Clock()
         self.fps = 30
@@ -27,6 +30,7 @@ class FlappyBirdAI:
         self.accelration_bird = 1
         self.bird_idx = 0
         self.bird_ratio = 5
+        self.top_bot_limit_penalty = -200
 
         self.main_window = pygame.display.set_mode((500, 400))
         self.bird_img_list = self.bird_img_init()
@@ -43,6 +47,30 @@ class FlappyBirdAI:
         self.score_text = self.my_font.render("Your Score: " + str(self.score), True, (255, 0, 0))
         self.score_renderer = self.my_font.render("0", True, (255, 0, 0))
 
+    def state_arr_init(self):
+        # Make whole screen as 1 in state input
+        self.state_arr = np.ones((self.window_size[1], self.window_size[0]))
+        # Find the pipe position
+        for i in range(self.upper_pipe.w):
+            penalty = [0,0]
+            for j in range(self.upper_pipe.h - 1,-1,-1):
+                self.state_arr[j,self.upper_pipe.x + i] = -10 - penalty[0]
+                penalty[0] += 1
+            for k in range(self.lower_pipe.h):
+                self.state_arr[self.lower_pipe.y + k,self.lower_pipe.x + i] = -10 - penalty[1]
+                penalty[1] += 1
+            for l in range(self.upper_pipe.h, self.lower_pipe.y):
+                self.state_arr[l, self.upper_pipe.x + i] = 5
+        # Make top and bottom screen into self.top_bot_limit_penalty
+        self.state_arr[0] = self.top_bot_limit_penalty
+        self.state_arr[self.window_size[1]-1] = self.top_bot_limit_penalty
+
+    def pop_state_arr(self):
+        self.state_arr = np.delete(self.state_arr, 0, axis=1)
+
+    def append_state_arr(self, new_column:np.array):
+        self.state_arr = np.hstack((self.state_arr, new_column))
+
     def reset(self):
         self.frame_iter = self.frame_iter + 1
         self.upper_pipe = pygame.Rect(400, 0, 40, 120)
@@ -56,6 +84,7 @@ class FlappyBirdAI:
         self.accelration_bird = 1
         self.bird_idx = 0
         self.bird_ratio = 5
+        self.state_arr_init()
         
     def bird_img_init(self):
         bird1_image = pygame.image.load(r'game\source\bird1.png')
@@ -78,6 +107,10 @@ class FlappyBirdAI:
         return background_image, upper_pipe_img, bottom_pipe_img
 
     def _run(self, action):
+        if self.first_start:
+            self.state_arr_init()
+            self.first_start = False
+
         state = "playing"
 
         for event in pygame.event.get():
@@ -113,7 +146,6 @@ class FlappyBirdAI:
             self.velocity_bird += self.accelration_bird + self.speed_up_coeff
             self.bird.y += self.velocity_bird
             
-    
             if self.upper_pipe.x <= -40:
                 self.upper_pipe.x = 500
                 self.lower_pipe.x = 500
@@ -125,21 +157,35 @@ class FlappyBirdAI:
 
                 self.bottom_pipe_img = pygame.transform.scale(self.bottom_pipe_img, (40, self.lower_pipe.h))
 
+            self.pop_state_arr()
+            new_col = np.ones([self.window_size[1],1])
+            # Check if new pipe is generated
+            if self.upper_pipe.x <= 500 and self.upper_pipe.x > 500 - self.upper_pipe.w:
+                print("new pipe!")
+                # Make a new column everytime a new frame generated
+                penalty = [0,0]
+                for j in range(self.upper_pipe.h - 1,-1,-1):
+                    new_col[j,0] = -10 - penalty[0]
+                    penalty[0] += 1
+                for k in range(self.lower_pipe.h):
+                    new_col[self.lower_pipe.y + k,0] = -10 - penalty[1]
+                    penalty[1] += 1
+                for l in range(self.upper_pipe.h, self.lower_pipe.y):
+                    new_col[l,0] = 5
+
+            new_col[0,0] = self.top_bot_limit_penalty
+            new_col[self.window_size[1] - 1,0] = self.top_bot_limit_penalty
+            self.append_state_arr(new_column=new_col)
+
+            self.reward += self.state_arr[self.bird.x, self.bird.y]
+
             if self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe) or self.bird.y < -30 or self.bird.y > 400:
                 state = "game over"
-                if(self.bird.colliderect(self.upper_pipe) or self.bird.colliderect(self.lower_pipe)):
-                    self.reward -= 30
-                elif self.bird.y < -30 or self.bird.y > 400:
-                    self.reward -= 100
                 self.game_over = True
 
             if self.bird.x == self.lower_pipe.x + self.lower_pipe.w :
                 self.score += 1
-                self.reward += 50
                 self.score_renderer = self.my_font.render(str(self.score), True, (255, 0, 0))
-            
-            self.reward += 3
-            
 
         if state == "pause":
             self.main_window.blit(self.pause_text, (200, 150))
@@ -172,12 +218,11 @@ class Train:
         self.train_speed = train_speed
         self.agent = Agent()
         self.game = FlappyBirdAI(500, 400, self.train_speed)
-        self.state_new = [150, 400, 120, 400, 280, False, True, False, False, False, False]
 
     def train(self):
         while True:
             # get old state
-            state_old = self.state_new
+            state_old = self.game.state_arr
 
             # get move
             final_move = self.agent.get_action(state_old)

@@ -5,27 +5,36 @@ import torch.nn.functional as F
 import os
 
 class Linear_QNet(nn.Module):
-    def __init__(self, input_size, hidden_size1, hidden_size2, hidden_size3, output_size):
+    def __init__(self, in_channels):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         super().__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size1)
-        self.linear2 = nn.Linear(hidden_size1, hidden_size2)
-        self.linear3 = nn.Linear(hidden_size2, hidden_size3)
-        self.linear4 = nn.Linear(hidden_size3, output_size)
-        self.dropout = nn.Dropout(0.1)
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=5, padding=1, stride=2)
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=5, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=5, padding=1)
+        self.bn3 = nn.BatchNorm2d(num_features=256)
+        self.max_pooling = nn.MaxPool2d(kernel_size=5)
+
+        self.linear1 = nn.Linear(489216, 1024)
+        self.linear2 = nn.Linear(1024, 256)
+        self.linear3 = nn.Linear(256, 64)
+        self.linear4 = nn.Linear(64, 1)
+        self.sigmoid = nn.Sigmoid()
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
         x = x.to(self.device)
+        x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.bn3(x)
+        x = self.max_pooling(x)
+        x = self.flatten(x)
         x = self.linear1(x)
-        # x = F.relu(x)
-        x = self.dropout(x)
         x = self.linear2(x)
-        # x = F.relu(x)
-        x = self.dropout(x)
         x = self.linear3(x)
         x = self.linear4(x)
-        # x = F.relu(x)
-        x = F.sigmoid(x)
+        x = self.sigmoid(x)
         return x
 
     def save(self, file_name='model.pth'):
@@ -39,6 +48,10 @@ class Linear_QNet(nn.Module):
 
 class QTrainer:
     def __init__(self, model, lr, gamma):
+        self.seed = 999
+        torch.cuda.manual_seed(self.seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.lr = lr
         self.gamma = gamma
@@ -57,13 +70,13 @@ class QTrainer:
         next_state = next_state.to(self.device)
         # (n, x)
 
-        if len(state.shape) == 1:
+        # if len(state.shape) == 1:
             # (1, x)
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done, )
+        # state = torch.unsqueeze(state, 0)
+        # next_state = torch.unsqueeze(next_state, 0)
+        # action = torch.unsqueeze(action, 0)
+        # reward = torch.unsqueeze(reward, 0)
+        # done = (done, )
 
         # 1: predicted Q values with current state
         pred = self.model(state)
