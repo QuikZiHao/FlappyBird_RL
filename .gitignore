@@ -1,3 +1,4 @@
 /FlappyBirdRL
 __pycache__/
 /model/trained_model/
+model/__pycache__
