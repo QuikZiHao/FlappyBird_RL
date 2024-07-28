@@ -8,13 +8,13 @@ class Linear_QNet(nn.Module):
     def __init__(self, in_channels):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=64, kernel_size=5, padding=1, stride=2)
-        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=5, padding=1)
-        self.conv3 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=5, padding=1)
-        self.bn3 = nn.BatchNorm2d(num_features=256)
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=5, padding=1, stride=2)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, padding=1)
+        self.bn3 = nn.BatchNorm2d(num_features=32)
         self.max_pooling = nn.MaxPool2d(kernel_size=5)
 
-        self.linear1 = nn.Linear(489216, 1024)
+        self.linear1 = nn.Linear(61152, 1024)
         self.linear2 = nn.Linear(1024, 256)
         self.linear3 = nn.Linear(256, 64)
         self.linear4 = nn.Linear(64, 1)
@@ -23,10 +23,13 @@ class Linear_QNet(nn.Module):
 
     def forward(self, x):
         x = x.to(self.device)
-        x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        if(x.dim() == 3):
+            x = torch.tensor(x, dtype=torch.float32).unsqueeze(1)
+        else:
+            x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         x = self.conv1(x)
         x = self.conv2(x)
-        x = self.conv3(x)
+        # x = self.conv3(x)
         x = self.bn3(x)
         x = self.max_pooling(x)
         x = self.flatten(x)
@@ -68,29 +71,14 @@ class QTrainer:
         action = action.to(self.device)
         reward = reward.to(self.device)
         next_state = next_state.to(self.device)
-        # (n, x)
-
-        # if len(state.shape) == 1:
-            # (1, x)
-        # state = torch.unsqueeze(state, 0)
-        # next_state = torch.unsqueeze(next_state, 0)
-        # action = torch.unsqueeze(action, 0)
-        # reward = torch.unsqueeze(reward, 0)
-        # done = (done, )
 
         # 1: predicted Q values with current state
         pred = self.model(state)
         target = pred.clone()
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
-
-            target[idx][torch.argmax(action[idx]).item()] = Q_new
-    
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
+        Q_new = reward
+        if not done:
+            Q_new = reward + self.gamma * self.model(next_state)
+        target = Q_new
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
         loss.backward()
