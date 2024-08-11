@@ -32,7 +32,7 @@ class FlappyBirdAI:
         self.bird_idx = 0
         self.bird_ratio = 5
         self.top_bot_limit_penalty = -200
-        self.pass_reward = 100
+        self.pass_reward = 30
 
         self.main_window = pygame.display.set_mode((500, 400))
         self.bird_img_list = self.bird_img_init()

@@ -8,7 +8,7 @@ class Agent:
     def __init__(self):
         self.max_memory = 100000
         self.batch_size = 16
-        self.lr = 0.03
+        self.lr = 0.001
         self.n_games = 0
         self.epsilon = 0 # randomness
         self.gamma = 0.1 # discount rate
