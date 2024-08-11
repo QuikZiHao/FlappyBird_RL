@@ -7,8 +7,8 @@ from model.model import Linear_QNet, QTrainer
 class Agent:
     def __init__(self):
         self.max_memory = 100000
-        self.batch_size = 32
-        self.lr = 0.1
+        self.batch_size = 16
+        self.lr = 0.03
         self.n_games = 0
         self.epsilon = 0 # randomness
         self.gamma = 0.1 # discount rate
@@ -47,10 +47,7 @@ class Agent:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             prediction = self.model(state0)
-            if(prediction > 0.5):
-                final_move[0] = 1
-            else:
-                final_move[0] = 0
+            final_move[0] = torch.argmax(prediction)
 
         return final_move
 
