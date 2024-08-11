@@ -212,17 +212,24 @@ class QTrainer:
         action = action.to(self.device)
         reward = reward.to(self.device)
         next_state = next_state.to(self.device)
+        done = torch.tensor(done, dtype=torch.float).to(self.device)
 
-        # 1: predicted Q values with current state
-        pred = self.model(state)
-        pred = torch.argmax(pred)
-        target = pred.clone()
-        Q_new = reward
-        if not done:
-            Q_new = reward + self.gamma * self.model(next_state)
-        target = Q_new
+         # 1: predicted Q values with current state
+        pred = self.model(state)  # Shape should be (batch_size, num_actions)
+        action = action.view(-1, 1)  # Shape should be (batch_size, 1)
+        # Get the Q value of the selected action
+        pred_action_value = pred.gather(1, action).squeeze(1)  # Shape should be (batch_size,)
+        
+        # Compute the target Q values
+        with torch.no_grad():
+            next_pred = self.model(next_state)  # Shape should be (batch_size, num_actions)
+            max_next_pred = next_pred.max(1)[0]  # Max Q-value for the next state
+            target = reward + (1 - done) * self.gamma * max_next_pred  # Compute target Q value
+
+        # Compute loss
+        loss = self.criterion(pred_action_value, target)
+        
+        # Optimize the model
         self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
         loss.backward()
-
         self.optimizer.step()
